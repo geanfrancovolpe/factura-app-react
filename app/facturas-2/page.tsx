@@ -10,9 +10,8 @@ import { TableSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useFetchData } from '@/lib/hooks/useFetchData';
+import { formatPrice, formatDate } from '@/lib/utils/formatters';
 import { Plus, Eye, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export default function Facturas2Page() {
   const { data: facturas, isLoading, error, reload } = useFetchData<Factura[]>({
@@ -74,9 +73,9 @@ export default function Facturas2Page() {
               {facturas.map((factura) => (
                 <TableRow key={factura.id}>
                   <TableCell className="font-medium">{factura.numero}</TableCell>
-                  <TableCell>{format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es })}</TableCell>
+                  <TableCell>{formatDate(factura.fecha)}</TableCell>
                   <TableCell>{factura.cliente_nombre || `ID ${factura.cliente}`}</TableCell>
-                  <TableCell>€{factura.total?.toFixed(2) || '-'}</TableCell>
+                  <TableCell>{formatPrice(factura.total)}</TableCell>
                   <TableCell>{getEstadoBadge(factura.estado)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

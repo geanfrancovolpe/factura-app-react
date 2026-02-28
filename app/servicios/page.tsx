@@ -10,6 +10,7 @@ import { TableSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useFetchData } from '@/lib/hooks/useFetchData';
+import { formatPrice } from '@/lib/utils/formatters';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function ServiciosPage() {
@@ -61,8 +62,8 @@ export default function ServiciosPage() {
                 <TableRow key={servicio.id}>
                   <TableCell className="font-medium">{servicio.nombre}</TableCell>
                   <TableCell>{servicio.descripcion || '-'}</TableCell>
-                  <TableCell>€{servicio.coste_sin_iva?.toFixed(2) || '-'}</TableCell>
-                  <TableCell>€{servicio.coste_con_iva.toFixed(2)}</TableCell>
+                  <TableCell>{formatPrice(servicio.coste_sin_iva)}</TableCell>
+                  <TableCell>{formatPrice(servicio.coste_con_iva)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/servicios/${servicio.id}`}>

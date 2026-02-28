@@ -9,9 +9,8 @@ import { TableSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useFetchData } from '@/lib/hooks/useFetchData';
+import { formatDate } from '@/lib/utils/formatters';
 import { Plus, Eye, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export default function HistoricosPage() {
   const { data: historicos, isLoading, error, reload } = useFetchData<Historico[]>({
@@ -60,7 +59,7 @@ export default function HistoricosPage() {
               {historicos.map((historico) => (
                 <TableRow key={historico.id}>
                   <TableCell className="font-medium">
-                    {format(new Date(historico.fecha_consulta), 'dd/MM/yyyy', { locale: es })}
+                    {formatDate(historico.fecha_consulta)}
                   </TableCell>
                   <TableCell>{historico.cliente_nombre || `ID ${historico.cliente}`}</TableCell>
                   <TableCell>{historico.servicios?.length || 0} servicios</TableCell>

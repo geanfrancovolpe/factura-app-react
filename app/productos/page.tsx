@@ -9,6 +9,7 @@ import { TableSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useFetchData } from '@/lib/hooks/useFetchData';
+import { formatPrice } from '@/lib/utils/formatters';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function ProductosPage() {
@@ -60,7 +61,7 @@ export default function ProductosPage() {
                 <TableRow key={producto.id}>
                   <TableCell className="font-medium">{producto.nombre}</TableCell>
                   <TableCell>{producto.descripcion || '-'}</TableCell>
-                  <TableCell>€{producto.precio.toFixed(2)}</TableCell>
+                  <TableCell>{formatPrice(producto.precio)}</TableCell>
                   <TableCell>{producto.stock || 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

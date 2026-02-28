@@ -10,9 +10,8 @@ import { TableSkeleton } from '@/components/loading/Skeletons';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useFetchData } from '@/lib/hooks/useFetchData';
+import { formatDate } from '@/lib/utils/formatters';
 import { Plus, Eye, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export default function CitasPage() {
   const { data: citas, isLoading, error, reload } = useFetchData<Cita[]>({
@@ -72,7 +71,7 @@ export default function CitasPage() {
               {citas.map((cita) => (
                 <TableRow key={cita.id}>
                   <TableCell className="font-medium">
-                    {format(new Date(cita.fecha_hora), 'dd/MM/yyyy HH:mm', { locale: es })}
+                    {formatDate(cita.fecha_hora, true)}
                   </TableCell>
                   <TableCell>{cita.cliente_nombre || `ID ${cita.cliente}`}</TableCell>
                   <TableCell>{cita.servicio_nombre || '-'}</TableCell>
