@@ -49,8 +49,8 @@ export default function FilesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Tamaño</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Archivo</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -58,12 +58,12 @@ export default function FilesPage() {
               {files.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell className="font-medium">{file.nombre}</TableCell>
-                  <TableCell>{file.tipo || '-'}</TableCell>
-                  <TableCell>{file.tamanio || '-'}</TableCell>
+                  <TableCell>{file.descripcion || '-'}</TableCell>
+                  <TableCell>-</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {file.url && (
-                        <a href={file.url} target="_blank" rel="noopener noreferrer">
+                      {file.archivo && (
+                        <a href={file.archivo} target="_blank" rel="noopener noreferrer">
                           <Button variant="outline" size="sm"><Download className="h-4 w-4" /></Button>
                         </a>
                       )}
