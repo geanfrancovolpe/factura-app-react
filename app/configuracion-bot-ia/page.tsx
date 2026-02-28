@@ -1,36 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { botService } from '@/services/bot.service';
 import { BotConfig } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function ConfiguracionBotIAPage() {
-  const [bots, setBots] = useState<BotConfig[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: configs, isLoading, error, reload } = useFetchData<BotConfig[]>({
+    fetchFn: () => botService.getAll(),
+    errorMessage: 'Error al cargar configuraciones de bot'
+  });
 
-  useEffect(() => {
-    const loadBots = async () => {
-      try {
-        const data = await botService.getAll();
-        setBots(data);
-      } catch (error) {
-        toast.error('Error al cargar configuraciones');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadBots();
-  }, []);
+  if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Configuración Bot IA</h1><TableSkeleton /></div>;
 
-  if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Config. Bot IA</h1><TableSkeleton /></div>;
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Configuración Bot IA</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
+
+  const getEstadoBadge = (activo: boolean) => {
+    return activo ? (
+      <Badge variant="default">Activo</Badge>
+    ) : (
+      <Badge variant="secondary">Inactivo</Badge>
+    );
+  };
 
   return (
     <div>
@@ -41,10 +46,12 @@ export default function ConfiguracionBotIAPage() {
         </Link>
       </div>
 
-      {bots.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay configuraciones de bot</p>
-        </div>
+      {!configs || configs.length === 0 ? (
+        <EmptyState
+          message="No hay configuraciones de bot registradas"
+          createLink="/configuracion-bot-ia/create"
+          createLabel="Crear Primera Configuración"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -57,23 +64,17 @@ export default function ConfiguracionBotIAPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bots.map((bot) => (
-                <TableRow key={bot.id}>
-                  <TableCell className="font-medium">{bot.nombre}</TableCell>
-                  <TableCell>{bot.modelo || '-'}</TableCell>
-                  <TableCell>
-                    {bot.activo ? (
-                      <Badge variant="default">Activo</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactivo</Badge>
-                    )}
-                  </TableCell>
+              {configs.map((config) => (
+                <TableRow key={config.id}>
+                  <TableCell className="font-medium">{config.nombre || 'Sin nombre'}</TableCell>
+                  <TableCell>{config.modelo || '-'}</TableCell>
+                  <TableCell>{getEstadoBadge(config.activo || false)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/configuracion-bot-ia/${bot.id}`}>
+                      <Link href={`/configuracion-bot-ia/${config.id}`}>
                         <Button variant="outline" size="sm"><Eye className="h-4 w-4" /></Button>
                       </Link>
-                      <Link href={`/configuracion-bot-ia/${bot.id}/edit`}>
+                      <Link href={`/configuracion-bot-ia/${config.id}/edit`}>
                         <Button variant="outline" size="sm"><Pencil className="h-4 w-4" /></Button>
                       </Link>
                     </div>

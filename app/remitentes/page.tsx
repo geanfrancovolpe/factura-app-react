@@ -1,35 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { remitentesService } from '@/services/remitentes.service';
 import { Remitente } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function RemitentesPage() {
-  const [remitentes, setRemitentes] = useState<Remitente[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRemitentes = async () => {
-      try {
-        const data = await remitentesService.getAll();
-        setRemitentes(data);
-      } catch (error) {
-        toast.error('Error al cargar remitentes');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadRemitentes();
-  }, []);
+  const { data: remitentes, isLoading, error, reload } = useFetchData<Remitente[]>({
+    fetchFn: () => remitentesService.getAll(),
+    errorMessage: 'Error al cargar remitentes'
+  });
 
   if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Remitentes</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Remitentes</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -40,10 +37,12 @@ export default function RemitentesPage() {
         </Link>
       </div>
 
-      {remitentes.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay remitentes registrados</p>
-        </div>
+      {!remitentes || remitentes.length === 0 ? (
+        <EmptyState
+          message="No hay remitentes registrados"
+          createLink="/remitentes/create"
+          createLabel="Crear Primer Remitente"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>

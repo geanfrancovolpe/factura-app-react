@@ -1,35 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { serviciosService } from '@/services/servicios.service';
 import { Servicio } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function ServiciosPage() {
-  const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadServicios = async () => {
-      try {
-        const data = await serviciosService.getAll();
-        setServicios(data);
-      } catch (error) {
-        toast.error('Error al cargar servicios');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadServicios();
-  }, []);
+  const { data: servicios, isLoading, error, reload } = useFetchData<Servicio[]>({
+    fetchFn: () => serviciosService.getAll(),
+    errorMessage: 'Error al cargar servicios'
+  });
 
   if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Servicios</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Servicios</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -40,10 +38,12 @@ export default function ServiciosPage() {
         </Link>
       </div>
 
-      {servicios.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay servicios registrados</p>
-        </div>
+      {!servicios || servicios.length === 0 ? (
+        <EmptyState
+          message="No hay servicios registrados"
+          createLink="/servicios/create"
+          createLabel="Crear Primer Servicio"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>

@@ -1,35 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { filesService } from '@/services/files.service';
 import { File } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
-import { Plus, Eye, Download } from 'lucide-react';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
+import { Plus, Eye, Pencil, Download } from 'lucide-react';
 
 export default function FilesPage() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadFiles = async () => {
-      try {
-        const data = await filesService.getAll();
-        setFiles(data);
-      } catch (error) {
-        toast.error('Error al cargar archivos');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadFiles();
-  }, []);
+  const { data: files, isLoading, error, reload } = useFetchData<File[]>({
+    fetchFn: () => filesService.getAll(),
+    errorMessage: 'Error al cargar archivos'
+  });
 
   if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Archivos</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Archivos</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -40,18 +37,20 @@ export default function FilesPage() {
         </Link>
       </div>
 
-      {files.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay archivos cargados</p>
-        </div>
+      {!files || files.length === 0 ? (
+        <EmptyState
+          message="No hay archivos cargados"
+          createLink="/files/create"
+          createLabel="Subir Primer Archivo"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Tamaño</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -59,16 +58,21 @@ export default function FilesPage() {
               {files.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell className="font-medium">{file.nombre}</TableCell>
-                  <TableCell>{file.descripcion || '-'}</TableCell>
-                  <TableCell>{file.cliente ? `ID ${file.cliente}` : '-'}</TableCell>
+                  <TableCell>{file.tipo || '-'}</TableCell>
+                  <TableCell>{file.tamanio || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {file.url && (
+                        <a href={file.url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="sm"><Download className="h-4 w-4" /></Button>
+                        </a>
+                      )}
                       <Link href={`/files/${file.id}`}>
                         <Button variant="outline" size="sm"><Eye className="h-4 w-4" /></Button>
                       </Link>
-                      <a href={file.archivo} download target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" size="sm"><Download className="h-4 w-4" /></Button>
-                      </a>
+                      <Link href={`/files/${file.id}/edit`}>
+                        <Button variant="outline" size="sm"><Pencil className="h-4 w-4" /></Button>
+                      </Link>
                     </div>
                   </TableCell>
                 </TableRow>

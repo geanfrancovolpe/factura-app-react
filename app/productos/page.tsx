@@ -1,35 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { productosService } from '@/services/productos.service';
 import { Producto } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 
 export default function ProductosPage() {
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadProductos = async () => {
-      try {
-        const data = await productosService.getAll();
-        setProductos(data);
-      } catch (error) {
-        toast.error('Error al cargar productos');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadProductos();
-  }, []);
+  const { data: productos, isLoading, error, reload } = useFetchData<Producto[]>({
+    fetchFn: () => productosService.getAll(),
+    errorMessage: 'Error al cargar productos'
+  });
 
   if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Productos</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Productos</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -40,10 +37,12 @@ export default function ProductosPage() {
         </Link>
       </div>
 
-      {productos.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay productos registrados</p>
-        </div>
+      {!productos || productos.length === 0 ? (
+        <EmptyState
+          message="No hay productos registrados"
+          createLink="/productos/create"
+          createLabel="Crear Primer Producto"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>

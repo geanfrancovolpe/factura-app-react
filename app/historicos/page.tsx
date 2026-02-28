@@ -1,51 +1,50 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { historicosService } from '@/services/historicos.service';
 import { Historico } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function HistoricosPage() {
-  const [historicos, setHistoricos] = useState<Historico[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadHistoricos = async () => {
-      try {
-        const data = await historicosService.getAll();
-        setHistoricos(data);
-      } catch (error) {
-        toast.error('Error al cargar históricos');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadHistoricos();
-  }, []);
+  const { data: historicos, isLoading, error, reload } = useFetchData<Historico[]>({
+    fetchFn: () => historicosService.getAll(),
+    errorMessage: 'Error al cargar históricos'
+  });
 
   if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Históricos</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Históricos</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Históricos Médicos</h1>
+        <h1 className="text-3xl font-bold">Históricos</h1>
         <Link href="/historicos/create">
           <Button><Plus className="mr-2 h-4 w-4" />Nuevo Histórico</Button>
         </Link>
       </div>
 
-      {historicos.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay históricos registrados</p>
-        </div>
+      {!historicos || historicos.length === 0 ? (
+        <EmptyState
+          message="No hay históricos registrados"
+          createLink="/historicos/create"
+          createLabel="Crear Primer Histórico"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -64,7 +63,7 @@ export default function HistoricosPage() {
                     {format(new Date(historico.fecha_consulta), 'dd/MM/yyyy', { locale: es })}
                   </TableCell>
                   <TableCell>{historico.cliente_nombre || `ID ${historico.cliente}`}</TableCell>
-                  <TableCell>{historico.servicios.length} servicio(s)</TableCell>
+                  <TableCell>{historico.servicios?.length || 0} servicios</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/historicos/${historico.id}`}>

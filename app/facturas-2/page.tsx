@@ -1,36 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { facturasService } from '@/services/facturas.service';
 import { Factura } from '@/types';
 import { TableSkeleton } from '@/components/loading/Skeletons';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useFetchData } from '@/lib/hooks/useFetchData';
 import { Plus, Eye, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function FacturasPage() {
-  const [facturas, setFacturas] = useState<Factura[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function Facturas2Page() {
+  const { data: facturas, isLoading, error, reload } = useFetchData<Factura[]>({
+    fetchFn: () => facturasService.getAll(),
+    errorMessage: 'Error al cargar facturas'
+  });
 
-  useEffect(() => {
-    const loadFacturas = async () => {
-      try {
-        const data = await facturasService.getAll();
-        setFacturas(data);
-      } catch (error) {
-        toast.error('Error al cargar facturas');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadFacturas();
-  }, []);
+  if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Facturas 2.0</h1><TableSkeleton /></div>;
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Facturas 2.0</h1>
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, any> = {
@@ -43,8 +42,6 @@ export default function FacturasPage() {
     return <Badge variant={variants[estado] || 'secondary'}>{estado}</Badge>;
   };
 
-  if (isLoading) return <div><h1 className="text-3xl font-bold mb-6">Facturas 2.0</h1><TableSkeleton /></div>;
-
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -54,10 +51,12 @@ export default function FacturasPage() {
         </Link>
       </div>
 
-      {facturas.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-muted-foreground">No hay facturas registradas</p>
-        </div>
+      {!facturas || facturas.length === 0 ? (
+        <EmptyState
+          message="No hay facturas registradas"
+          createLink="/facturas-2/create"
+          createLabel="Crear Primera Factura"
+        />
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -75,9 +74,7 @@ export default function FacturasPage() {
               {facturas.map((factura) => (
                 <TableRow key={factura.id}>
                   <TableCell className="font-medium">{factura.numero}</TableCell>
-                  <TableCell>
-                    {format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es })}
-                  </TableCell>
+                  <TableCell>{format(new Date(factura.fecha), 'dd/MM/yyyy', { locale: es })}</TableCell>
                   <TableCell>{factura.cliente_nombre || `ID ${factura.cliente}`}</TableCell>
                   <TableCell>€{factura.total?.toFixed(2) || '-'}</TableCell>
                   <TableCell>{getEstadoBadge(factura.estado)}</TableCell>
